@@ -27,15 +27,6 @@ export function percentileRank(xs: number[], x: number): number {
   return below / xs.length;
 }
 
-export function quantile(xs: number[], q: number): number {
-  if (xs.length === 0) return NaN;
-  const s = [...xs].sort((a, b) => a - b);
-  const pos = (s.length - 1) * q;
-  const lo = Math.floor(pos);
-  const hi = Math.ceil(pos);
-  return s[lo] + (s[hi] - s[lo]) * (pos - lo);
-}
-
 // Log-premium in basis points: 10_000 * ln(token / fair).
 export function premiumBps(tokenPrice: number, fairPrice: number): number {
   return 10_000 * Math.log(tokenPrice / fairPrice);

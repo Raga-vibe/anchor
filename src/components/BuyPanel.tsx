@@ -41,24 +41,27 @@ export default function BuyPanel({ ticker, xstockSymbol, marketVerdict, perShare
   const [err, setErr] = useState<string | null>(null);
   const [ack, setAck] = useState(false);
   const [result, setResult] = useState<SendResult | null>(null);
-  const [usdcBal, setUsdcBal] = useState<number | null>(null);
+  const [balance, setBalance] = useState<{ wallet: string; usdc: number } | null>(null);
 
   const usdc = Number(amount);
   const valid = usdc >= 1 && usdc <= 1000;
+  const wallet = publicKey?.toBase58() ?? null;
+  const usdcBal = balance && balance.wallet === wallet ? balance.usdc : null;
 
   useEffect(() => {
-    if (!publicKey) return setUsdcBal(null);
-    getJson<{ usdc: number }>(`/api/balance?wallet=${publicKey.toBase58()}`)
-      .then((b) => setUsdcBal(b.usdc))
-      .catch(() => setUsdcBal(null));
-  }, [publicKey, result]);
+    if (!wallet) return;
+    getJson<{ usdc: number }>(`/api/balance?wallet=${wallet}`)
+      .then((b) => setBalance({ wallet, usdc: b.usdc }))
+      .catch(() => setBalance(null));
+  }, [wallet, result]);
 
   // A changed amount invalidates the quote.
-  useEffect(() => {
+  function changeAmount(value: string) {
+    setAmount(value);
     setQuote(null);
     setAck(false);
     setErr(null);
-  }, [amount]);
+  }
 
   async function review() {
     setErr(null);
@@ -134,7 +137,7 @@ export default function BuyPanel({ ticker, xstockSymbol, marketVerdict, perShare
           <input
             inputMode="decimal"
             value={amount}
-            onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, "").slice(0, 7))}
+            onChange={(e) => changeAmount(e.target.value.replace(/[^0-9.]/g, "").slice(0, 7))}
             className="tabular bg-transparent text-center text-5xl font-semibold tracking-tight outline-none"
             style={{ width: `${Math.max(2, amount.length) + 0.3}ch` }}
             aria-label="Amount in USDC"
@@ -145,7 +148,7 @@ export default function BuyPanel({ ticker, xstockSymbol, marketVerdict, perShare
           {PRESETS.map((p) => (
             <button
               key={p}
-              onClick={() => setAmount(String(p))}
+              onClick={() => changeAmount(String(p))}
               className={`rounded-full px-3 py-1 text-sm transition-colors ${
                 usdc === p ? "bg-ink text-page" : "bg-surface text-ink-2 ring-1 ring-hairline hover:text-ink"
               }`}

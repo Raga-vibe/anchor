@@ -72,8 +72,8 @@ export default function StockView({ ticker, name, xstockSymbol }: { ticker: stri
   const points = useMemo(() => {
     if (!data) return [];
     const hrs = RANGES.find((r) => r.id === range)!.hours;
-    const since = Date.now() / 1000 - hrs * 3600;
-    return data.series.filter((p) => p.t >= since);
+    const end = data.series.at(-1)?.t ?? 0;
+    return data.series.filter((p) => p.t > end - hrs * 3600);
   }, [data, range]);
 
   const buy = <BuyPanel ticker={ticker} xstockSymbol={xstockSymbol} marketVerdict={g?.verdict} perShare={g?.tokenPricePerShare} />;

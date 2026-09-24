@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import type { Verdict } from "@/lib/guard";
 import { VERDICT_COPY } from "@/lib/explain";
 import { SESSION_LABEL, type Session } from "@/lib/session";
@@ -8,44 +8,37 @@ import { hours } from "@/lib/format";
 
 export type ApiError = { error: string; code?: string };
 
-// Fetch JSON and optionally re-poll. Keeps the last good data on refresh errors.
-export function usePolling<T>(url: string | null, intervalMs = 0) {
-  const [data, setData] = useState<T | null>(null);
-  const [error, setError] = useState<ApiError | null>(null);
-  const [loading, setLoading] = useState(Boolean(url));
-  const alive = useRef(true);
+type Polled<T> = { url: string; data: T | null; error: ApiError | null };
 
-  const load = useCallback(async () => {
-    if (!url) return;
-    try {
-      const res = await fetch(url, { cache: "no-store" });
-      const body = await res.json();
-      if (!alive.current) return;
-      if (!res.ok) setError(body as ApiError);
-      else {
-        setData(body as T);
-        setError(null);
-      }
-    } catch (e) {
-      if (alive.current) setError({ error: e instanceof Error ? e.message : String(e) });
-    } finally {
-      if (alive.current) setLoading(false);
-    }
-  }, [url]);
+// Fetch JSON and optionally re-poll. Keeps the last good data on refresh errors.
+// Results are keyed by URL, so switching URLs never shows the previous one's data.
+export function usePolling<T>(url: string | null, intervalMs = 0) {
+  const [state, setState] = useState<Polled<T> | null>(null);
 
   useEffect(() => {
-    alive.current = true;
-    setLoading(Boolean(url));
+    if (!url) return;
+    let alive = true;
+    const keep = (prev: Polled<T> | null) => (prev?.url === url ? prev.data : null);
+    const load = async () => {
+      try {
+        const res = await fetch(url, { cache: "no-store" });
+        const body = await res.json();
+        if (!alive) return;
+        setState((prev) => (res.ok ? { url, data: body as T, error: null } : { url, data: keep(prev), error: body as ApiError }));
+      } catch (e) {
+        if (alive) setState((prev) => ({ url, data: keep(prev), error: { error: e instanceof Error ? e.message : String(e) } }));
+      }
+    };
     load();
-    if (!intervalMs || !url) return () => void (alive.current = false);
-    const id = setInterval(load, intervalMs);
+    const id = intervalMs ? setInterval(load, intervalMs) : undefined;
     return () => {
-      alive.current = false;
+      alive = false;
       clearInterval(id);
     };
-  }, [url, intervalMs, load]);
+  }, [url, intervalMs]);
 
-  return { data, error, loading, reload: load };
+  const current = state?.url === url ? state : null;
+  return { data: current?.data ?? null, error: current?.error ?? null, loading: Boolean(url) && !current };
 }
 
 // True for a moment whenever `value` changes (not on first render).

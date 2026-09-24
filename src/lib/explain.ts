@@ -36,11 +36,6 @@ export function verdictLine(g: GuardResult): string {
   }
 }
 
-// The full one-liner: "AAPLx is 0.06% above real AAPL. That's normal for this time of day."
-export function summary(g: GuardResult, ticker: string, xstockSymbol: string): string {
-  return `${gapPhrase(g, ticker, xstockSymbol)}. ${verdictLine(g)}`;
-}
-
 // Supporting facts shown under the verdict.
 export function details(g: GuardResult, ticker: string): string[] {
   const lines = [`Fair range right now: ${usd(g.fairLowPerShare)} – ${usd(g.fairHighPerShare)} per share.`];

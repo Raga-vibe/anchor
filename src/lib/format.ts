@@ -16,10 +16,6 @@ export function hours(h: number) {
   return `${(h / 24).toFixed(1)} days`;
 }
 
-export function ordinalPct(p: number) {
-  return `${Math.round(p * 100)}%`;
-}
-
 export function shortAddr(a: string) {
   return `${a.slice(0, 4)}…${a.slice(-4)}`;
 }

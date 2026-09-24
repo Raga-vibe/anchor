@@ -198,7 +198,9 @@ export default function BuyPanel({ ticker, xstockSymbol, marketVerdict, perShare
             <p className="mt-2 text-sm text-ink-2">
               {quote.exec.dollarsOverFair > 0.005
                 ? `This order costs about ${usd(quote.exec.dollarsOverFair)} more than buying at the usual fair price.`
-                : `This order is at or below the usual fair price. You save about ${usd(Math.abs(quote.exec.dollarsOverFair))}.`}
+                : quote.exec.dollarsOverFair < -0.005
+                  ? `This order is below the usual fair price. You save about ${usd(Math.abs(quote.exec.dollarsOverFair))}.`
+                  : "This order is right at the usual fair price."}
             </p>
           </div>
 

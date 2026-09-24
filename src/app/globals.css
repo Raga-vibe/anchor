@@ -1,0 +1,109 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: light;
+  --page: #f9f9f7;
+  --surface: #fcfcfb;
+  --card: #ffffff;
+  --ink: #0b0b0b;
+  --ink-2: #52514e;
+  --muted: #898781;
+  --hairline: #e1e0d9;
+  --axis: #c3c2b7;
+  --ring: rgba(11, 11, 11, 0.1);
+  --accent: #2a78d6;
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --band: rgba(137, 135, 129, 0.16);
+  --closed: rgba(137, 135, 129, 0.08);
+  --good: #0ca30c;
+  --warning: #fab219;
+  --critical: #d03b3b;
+  --good-wash: rgba(12, 163, 12, 0.1);
+  --warning-wash: rgba(250, 178, 25, 0.16);
+  --critical-wash: rgba(208, 59, 59, 0.1);
+  --button: #0b0b0b;
+  --button-ink: #ffffff;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --page: #0d0d0d;
+    --surface: #1a1a19;
+    --card: #1a1a19;
+    --ink: #ffffff;
+    --ink-2: #c3c2b7;
+    --muted: #898781;
+    --hairline: #2c2c2a;
+    --axis: #383835;
+    --ring: rgba(255, 255, 255, 0.1);
+    --accent: #3987e5;
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --band: rgba(195, 194, 183, 0.14);
+    --closed: rgba(195, 194, 183, 0.06);
+    --good-wash: rgba(12, 163, 12, 0.16);
+    --warning-wash: rgba(250, 178, 25, 0.14);
+    --critical-wash: rgba(208, 59, 59, 0.18);
+    --button: #ffffff;
+    --button-ink: #0b0b0b;
+  }
+}
+
+@theme inline {
+  --color-page: var(--page);
+  --color-surface: var(--surface);
+  --color-card: var(--card);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-muted: var(--muted);
+  --color-hairline: var(--hairline);
+  --color-accent: var(--accent);
+  --color-good: var(--good);
+  --color-warning: var(--warning);
+  --color-critical: var(--critical);
+  --color-button: var(--button);
+  --color-button-ink: var(--button-ink);
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+html,
+body {
+  background: var(--page);
+  color: var(--ink);
+}
+
+body {
+  font-family: var(--font-sans);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Wallet adapter button, restyled to match */
+.wallet-adapter-button.anchor-wallet {
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 600;
+  background: var(--button);
+  color: var(--button-ink);
+  line-height: 36px;
+}
+.wallet-adapter-button.anchor-wallet:not([disabled]):hover {
+  background: var(--button);
+  opacity: 0.85;
+}
+.wallet-adapter-button.anchor-wallet .wallet-adapter-button-start-icon {
+  width: 18px;
+  height: 18px;
+  margin-right: 8px;
+}
+.wallet-adapter-modal-wrapper {
+  font-family: var(--font-sans);
+}

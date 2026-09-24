@@ -140,16 +140,6 @@ export function Card({ children, className = "", style }: { children: ReactNode;
 }
 
 export function ErrorNotice({ error }: { error: ApiError }) {
-  if (error.code === "NO_PYTH_KEY") {
-    return (
-      <Card className="p-4 text-sm">
-        <p className="font-semibold">Pyth API key needed</p>
-        <p className="mt-1 text-ink-2">
-          Create <code>.env.local</code> in the project root with <code>PYTH_PRO_API_KEY=your_key</code>, then restart the dev server.
-        </p>
-      </Card>
-    );
-  }
   return (
     <Card className="p-4 text-sm">
       <p className="font-semibold">Something went wrong</p>

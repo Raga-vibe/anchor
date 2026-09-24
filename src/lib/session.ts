@@ -54,6 +54,14 @@ export function sessionAt(ms: number): Session {
   return "overNight";
 }
 
+// The last moment (ms) any US session was open, at or before `ms`.
+export function lastLiveMs(ms: number): number {
+  const step = 5 * 60 * 1000;
+  let t = ms;
+  for (let i = 0; i < 12 * 24 * 7 && sessionAt(t) === "closed"; i++) t -= step;
+  return t;
+}
+
 export function bucketOf(s: Session): Bucket {
   if (s === "regular") return "regular";
   if (s === "closed") return "closed";

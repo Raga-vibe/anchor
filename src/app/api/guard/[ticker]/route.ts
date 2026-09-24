@@ -19,7 +19,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ ticker:
       asOf: Date.now(),
       ...rest,
       xstockMint: asset.xstockMint,
-      hasOndo: Boolean(asset.feeds.ondo),
+      pool: asset.pool,
       baseline: {
         convention: baseline.convention,
         hourlyVolBps: baseline.hourlyVolBps,

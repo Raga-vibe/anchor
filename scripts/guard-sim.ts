@@ -42,11 +42,11 @@ console.log(`band at end of weekend (${fmt(lastClosed.staleHours)}h stale): ${fm
 
 const eqP = 250;
 const cases: [string, Parameters<typeof evaluate>[1], string][] = [
-  ["regular, normal premium", { nowMs: now * 1000, session: "regular", equity: { price: eqP, confidence: 0.02, updatedAtMs: now * 1000 - 1000 }, xstock: { price: eqP * RR * Math.exp(4e-4), confidence: 0.05 }, rr: RR, ondo: null }, "fair"],
-  ["regular, +25bp premium", { nowMs: now * 1000, session: "regular", equity: { price: eqP, confidence: 0.02, updatedAtMs: now * 1000 - 1000 }, xstock: { price: eqP * RR * Math.exp(25e-4), confidence: 0.05 }, rr: RR, ondo: null }, "wait"],
-  ["regular, -20bp discount", { nowMs: now * 1000, session: "regular", equity: { price: eqP, confidence: 0.02, updatedAtMs: now * 1000 - 1000 }, xstock: { price: eqP * RR * Math.exp(-20e-4), confidence: 0.05 }, rr: RR, ondo: null }, "discount"],
-  ["closed 50h, +150bp", { nowMs: now * 1000, session: "closed", equity: { price: eqP, confidence: 0.02, updatedAtMs: now * 1000 - 50 * 3600e3 }, xstock: { price: eqP * RR * Math.exp(150e-4), confidence: 0.05 }, rr: RR, ondo: null }, "fair"],
-  ["closed 1h, +150bp", { nowMs: now * 1000, session: "closed", equity: { price: eqP, confidence: 0.02, updatedAtMs: now * 1000 - 1 * 3600e3 }, xstock: { price: eqP * RR * Math.exp(150e-4), confidence: 0.05 }, rr: RR, ondo: null }, "wait"],
+  ["regular, normal premium", { nowMs: now * 1000, session: "regular", equity: { price: eqP, confidence: 0.02, updatedAtMs: now * 1000 - 1000 }, xstock: { price: eqP * RR * Math.exp(4e-4), confidence: 0.05 }, rr: RR }, "fair"],
+  ["regular, +25bp premium", { nowMs: now * 1000, session: "regular", equity: { price: eqP, confidence: 0.02, updatedAtMs: now * 1000 - 1000 }, xstock: { price: eqP * RR * Math.exp(25e-4), confidence: 0.05 }, rr: RR }, "wait"],
+  ["regular, -20bp discount", { nowMs: now * 1000, session: "regular", equity: { price: eqP, confidence: 0.02, updatedAtMs: now * 1000 - 1000 }, xstock: { price: eqP * RR * Math.exp(-20e-4), confidence: 0.05 }, rr: RR }, "discount"],
+  ["closed 50h, +150bp", { nowMs: now * 1000, session: "closed", equity: { price: eqP, confidence: 0.02, updatedAtMs: now * 1000 - 50 * 3600e3 }, xstock: { price: eqP * RR * Math.exp(150e-4), confidence: 0.05 }, rr: RR }, "fair"],
+  ["closed 1h, +150bp", { nowMs: now * 1000, session: "closed", equity: { price: eqP, confidence: 0.02, updatedAtMs: now * 1000 - 1 * 3600e3 }, xstock: { price: eqP * RR * Math.exp(150e-4), confidence: 0.05 }, rr: RR }, "wait"],
 ];
 let fails = 0;
 for (const [name, inp, expect] of cases) {

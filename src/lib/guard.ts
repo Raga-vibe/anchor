@@ -14,8 +14,8 @@
 //   stale reference (US market closed, E is the last traded price):
 //       z = (p - median_regular) / sqrt( s_ext^2 + σ_h^2 * h + cX^2 + cE^2 )
 //
-// where s_b is a MAD-based scale of the premium in bucket b, cX / cE are Pyth's
-// live confidence intervals (in bps), σ_h is the equity's hourly volatility and
+// where s_b is a MAD-based scale of the premium in bucket b, cE is Pyth's live
+// confidence interval for the equity (cX for the token when available), σ_h is the equity's hourly volatility and
 // h the hours since the reference last traded. The σ_h·√h term widens the fair
 // range the longer the market has been shut: after a 60-hour weekend the real
 // stock could legitimately be several percent away from Friday's close.
@@ -24,9 +24,8 @@
 
 import { bpsToDollarsPer100, median, percentileRank, premiumBps, robustScale } from "./stats";
 import { bucketOf, sessionAt, type Bucket, type Session } from "./session";
-import type { Candles } from "./pyth";
+import type { Candles } from "./sources";
 
-export const LOOKBACK_DAYS = 30;
 const MIN_SCALE_BPS = 3; // never claim precision tighter than 3 bps
 const FRESH_MS = 10 * 60 * 1000; // an equity print older than this counts as stale
 
@@ -38,22 +37,20 @@ export type SeriesPoint = {
   t: number; // unix seconds (hour start)
   session: Session;
   premium: number; // xStock premium, bps
-  ondo: number | null; // Ondo premium, bps
   staleHours: number;
 };
 
 export type Baseline = {
   builtAt: number;
-  // How Pyth quotes Crypto.<T>X/USD: per raw token (needs RR) or per share.
+  // Whether token prices are quoted per raw token (needs RR) or per share.
   convention: "perRawToken" | "perShare";
   buckets: Record<Exclude<Bucket, "closed">, BucketStats>;
-  ondoBuckets: Record<Exclude<Bucket, "closed">, BucketStats> | null;
   hourlyVolBps: number;
   closedZ: number[];
   series: SeriesPoint[];
 };
 
-type CandleSet = { equity: Candles; xstock: Candles; rr: Candles; ondo?: Candles | null };
+type CandleSet = { equity: Candles; xstock: Candles; rr: Candles };
 
 function lastAtOrBefore(c: Candles, t: number, from: number): { idx: number } {
   let i = from;
@@ -81,10 +78,9 @@ export function buildBaseline(c: CandleSet, now = Date.now()): Baseline {
   const hourlyVolBps = robustScale(rets, 5);
 
   // Align every xStock hour with the equity reference and redemption rate.
-  type Raw = { t: number; session: Session; x: number; e: number; rr: number; on: number | null; staleHours: number };
+  type Raw = { t: number; session: Session; x: number; e: number; rr: number; staleHours: number };
   const raw: Raw[] = [];
   let rrCursor = 0;
-  let onCursor = 0;
   let lastLiveEq: { t: number; price: number } | null = null;
   for (let i = 0; i < c.xstock.t.length; i++) {
     const t = c.xstock.t[i];
@@ -97,15 +93,6 @@ export function buildBaseline(c: CandleSet, now = Date.now()): Baseline {
     if (r.idx < 0) continue;
     rrCursor = r.idx;
 
-    let on: number | null = null;
-    if (c.ondo && c.ondo.t.length) {
-      const o = lastAtOrBefore(c.ondo, t, onCursor);
-      if (o.idx >= 0 && t - c.ondo.t[o.idx] <= 3600) {
-        onCursor = o.idx;
-        on = c.ondo.c[o.idx];
-      }
-    }
-
     const fresh = lastLiveEq.t === t;
     raw.push({
       t,
@@ -113,7 +100,6 @@ export function buildBaseline(c: CandleSet, now = Date.now()): Baseline {
       x: c.xstock.c[i],
       e: lastLiveEq.price,
       rr: c.rr.c[r.idx],
-      on,
       staleHours: fresh ? 0 : (t - lastLiveEq.t) / 3600,
     });
   }
@@ -131,25 +117,13 @@ export function buildBaseline(c: CandleSet, now = Date.now()): Baseline {
     t: r.t,
     session: r.session,
     premium: premiumBps(r.x, fair(r)),
-    ondo: r.on !== null ? premiumBps(r.on, r.e) : null,
     staleHours: r.staleHours,
   }));
 
-  const pick = (b: Bucket, f: (p: SeriesPoint) => number | null) =>
-    series
-      .filter((p) => bucketOf(p.session) === b && p.staleHours === 0)
-      .map(f)
-      .filter((v): v is number => v !== null && Number.isFinite(v));
+  const pick = (b: Bucket) =>
+    series.filter((p) => bucketOf(p.session) === b && p.staleHours === 0).map((p) => p.premium).filter(Number.isFinite);
 
-  const buckets = {
-    regular: statsOf(pick("regular", (p) => p.premium)),
-    extended: statsOf(pick("extended", (p) => p.premium)),
-  };
-  const ondoReg = pick("regular", (p) => p.ondo);
-  const ondoBuckets =
-    ondoReg.length >= 10
-      ? { regular: statsOf(ondoReg), extended: statsOf(pick("extended", (p) => p.ondo)) }
-      : null;
+  const buckets = { regular: statsOf(pick("regular")), extended: statsOf(pick("extended")) };
 
   const closedZ = series
     .filter((p) => p.session === "closed")
@@ -160,7 +134,7 @@ export function buildBaseline(c: CandleSet, now = Date.now()): Baseline {
     )
     .filter(Number.isFinite);
 
-  return { builtAt: now, convention, buckets, ondoBuckets, hourlyVolBps, closedZ, series };
+  return { builtAt: now, convention, buckets, hourlyVolBps, closedZ, series };
 }
 
 export type LiveInputs = {
@@ -169,7 +143,6 @@ export type LiveInputs = {
   equity: { price: number; confidence: number | null; updatedAtMs: number | null };
   xstock: { price: number; confidence: number | null };
   rr: number;
-  ondo: { price: number } | null;
 };
 
 export type GuardResult = {
@@ -190,7 +163,6 @@ export type GuardResult = {
   rr: number;
   convention: Baseline["convention"];
   confidenceBps: number;
-  ondo: { premiumBps: number; z: number | null } | null;
 };
 
 export function verdictFor(z: number): Verdict {
@@ -202,7 +174,8 @@ export function verdictFor(z: number): Verdict {
 }
 
 // Scale + center for a premium observed now, given reference staleness.
-function referenceModel(b: Baseline, stats: Baseline["buckets"], session: Session, staleH: number) {
+function referenceModel(b: Baseline, session: Session, staleH: number) {
+  const stats = b.buckets;
   if (staleH === 0 && session !== "closed") {
     const s = stats[bucketOf(session) as "regular" | "extended"];
     return { center: s.median, scale: s.scale };
@@ -215,7 +188,7 @@ function referenceModel(b: Baseline, stats: Baseline["buckets"], session: Sessio
 
 // The ±2σ fair range for a historical hour, in bps (used by the chart).
 export function fairBandAt(b: Baseline, p: SeriesPoint) {
-  const { center, scale } = referenceModel(b, b.buckets, p.session, p.staleHours);
+  const { center, scale } = referenceModel(b, p.session, p.staleHours);
   return { center, lo: center - 2 * scale, hi: center + 2 * scale };
 }
 
@@ -231,7 +204,7 @@ export function evaluate(b: Baseline, live: LiveInputs): GuardResult {
   const cE = live.equity.confidence ? (10_000 * live.equity.confidence) / live.equity.price : 0;
   const confidenceBps = Math.sqrt(cX ** 2 + cE ** 2);
 
-  const { center, scale } = referenceModel(b, b.buckets, live.session, staleH);
+  const { center, scale } = referenceModel(b, live.session, staleH);
   const sEff = Math.sqrt(scale ** 2 + confidenceBps ** 2);
   const z = (p - center) / sEff;
 
@@ -241,17 +214,6 @@ export function evaluate(b: Baseline, live: LiveInputs): GuardResult {
 
   // Everything in "per share" terms so the UI can compare to the real stock.
   const perShare = (bps: number) => live.equity.price * Math.exp(bps / 10_000);
-
-  let ondo: GuardResult["ondo"] = null;
-  if (live.ondo) {
-    const po = premiumBps(live.ondo.price, live.equity.price);
-    let zo: number | null = null;
-    if (b.ondoBuckets) {
-      const m = referenceModel(b, b.ondoBuckets, live.session, staleH);
-      zo = (po - m.center) / Math.sqrt(m.scale ** 2 + confidenceBps ** 2);
-    }
-    ondo = { premiumBps: po, z: zo };
-  }
 
   return {
     verdict: verdictFor(z),
@@ -271,7 +233,6 @@ export function evaluate(b: Baseline, live: LiveInputs): GuardResult {
     rr: live.rr,
     convention: b.convention,
     confidenceBps,
-    ondo,
   };
 }
 

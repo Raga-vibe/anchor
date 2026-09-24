@@ -16,7 +16,9 @@ type Detail = {
   session: Session;
   guard: GuardResult | null;
   error?: string;
-  hasOndo: boolean;
+  pythAccount: string;
+  pool: string;
+  spreadBps: number | null;
   baseline: {
     convention: string;
     hourlyVolBps: number;
@@ -67,7 +69,7 @@ export default function StockView({ ticker, name, xstockSymbol }: { ticker: stri
           </Card>
 
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <Stat label={`Real ${ticker}`} value={usd(g.equityPrice)} sub={g.referenceStale ? "last US trade" : "live, via Pyth"} />
+            <Stat label={`Real ${ticker}`} value={usd(g.equityPrice)} sub={g.referenceStale ? "last US trade, Pyth" : "live, Pyth on Solana"} />
             <Stat label="Token, per share" value={usd(g.tokenPricePerShare)} sub={xstockSymbol} />
             <Stat label="Premium now" value={pct(g.premiumBps)} sub={`typical ${pct(g.typicalBps)}`} />
             <Stat
@@ -89,26 +91,30 @@ export default function StockView({ ticker, name, xstockSymbol }: { ticker: stri
                 when the US market is closed.
               </p>
             </div>
-            <PremiumChart points={data.series} showOndo={data.hasOndo} />
+            <PremiumChart points={data.series} />
           </Card>
 
-          {g.ondo && (
-            <Card className="p-4 text-sm">
-              <h2 className="font-semibold">Second opinion: Ondo</h2>
-              <p className="mt-1 leading-relaxed text-ink-2">
-                Ondo&apos;s tokenized {ticker} is {pct(g.ondo.premiumBps)} vs the real stock.{" "}
-                {g.ondo.z === null
-                  ? "Not enough Ondo history to judge it."
-                  : Math.sign(g.ondo.z) === Math.sign(g.z) && Math.abs(g.ondo.z) > 1.5 && Math.abs(g.z) > 1.5
-                    ? "Both token issuers show the same unusual move, which points to real demand rather than a glitch."
-                    : Math.abs(g.z - g.ondo.z) > 2.5
-                      ? `The two issuers disagree (${g.z.toFixed(1)}σ vs ${g.ondo.z.toFixed(1)}σ), so this looks specific to ${xstockSymbol}.`
-                      : "Both token issuers are pricing it similarly."}
-              </p>
-            </Card>
-          )}
-
           <BuyPanel ticker={ticker} xstockSymbol={xstockSymbol} />
+
+          <Card className="p-4 text-sm">
+            <h2 className="font-semibold">Where these numbers come from</h2>
+            <ul className="mt-2 space-y-1.5 leading-relaxed text-ink-2">
+              <li>
+                Real {ticker} price: Pyth, read directly from its price account on Solana.{" "}
+                <a href={`https://solscan.io/account/${data.pythAccount}`} target="_blank" rel="noreferrer" className="font-medium text-accent underline underline-offset-2">
+                  Verify on Solscan
+                </a>
+              </li>
+              <li>
+                Token price: midpoint of live $100 buy and sell quotes on Jupiter
+                {data.spreadBps !== null && ` (spread right now: ${(Math.max(0, data.spreadBps) / 100).toFixed(2)}%)`}.
+              </li>
+              <li>
+                History: 30 days of hourly prices from the main {xstockSymbol}/USDC pool and the US-listed stock, including pre-market
+                and after-hours.
+              </li>
+            </ul>
+          </Card>
 
           <details className="rounded-2xl border border-hairline bg-card p-4 text-sm">
             <summary className="cursor-pointer font-semibold">Model details</summary>
@@ -117,7 +123,7 @@ export default function StockView({ ticker, name, xstockSymbol }: { ticker: stri
               <dd className="text-right text-ink">{g.z.toFixed(2)}</dd>
               <dt>Scale used (σ, incl. Pyth confidence)</dt>
               <dd className="text-right text-ink">{pct(g.scaleBps)}</dd>
-              <dt>Pyth confidence (combined)</dt>
+              <dt>Pyth confidence interval</dt>
               <dd className="text-right text-ink">{pct(g.confidenceBps, 3)}</dd>
               <dt>Regular hours: median / σ (n)</dt>
               <dd className="text-right text-ink">
@@ -133,7 +139,7 @@ export default function StockView({ ticker, name, xstockSymbol }: { ticker: stri
               <dd className="text-right text-ink">{pct(data.baseline.hourlyVolBps)}</dd>
               <dt>Shares per token (dividend multiplier)</dt>
               <dd className="text-right text-ink">{g.rr.toFixed(6)}</dd>
-              <dt>Pyth xStock quote convention</dt>
+              <dt>Pool price unit (auto-detected)</dt>
               <dd className="text-right text-ink">{data.baseline.convention}</dd>
             </dl>
             <Link href="/how" className="mt-3 inline-block font-medium text-accent underline underline-offset-2">

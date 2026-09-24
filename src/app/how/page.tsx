@@ -14,44 +14,49 @@ export default function How() {
         </p>
       </header>
 
-      <Section n="1" title="Measure the gap with Pyth">
+      <Section n="1" title="The real price, from Pyth on Solana">
         <p>
-          For each stock Anchor reads four Pyth feeds: the real US equity (e.g. <Code>Equity.US.AAPL/USD</Code>), the xStock (
-          <Code>Crypto.AAPLX/USD</Code>), the xStock redemption rate (<Code>Crypto.AAPLX/AAPL.RR</Code>) and, where available,
-          Ondo&apos;s version (<Code>Crypto.AAPLON/USD</Code>).
+          The fair value comes from Pyth&apos;s US equity feeds (e.g. <Code>Equity.US.AAPL/USD</Code>). Anchor reads them
+          directly from Pyth&apos;s price accounts on Solana, the same verified accounts a smart contract would read. It uses
+          Pyth&apos;s confidence interval as well as the price, and you can verify any price on Solscan.
+        </p>
+      </Section>
+
+      <Section n="2" title="The token's price, from the market">
+        <p>
+          The token price is the midpoint of a live $100 buy quote and the matching sell quote on Jupiter. That is what you could
+          actually trade at. Using a pool&apos;s &ldquo;last trade&rdquo; price instead would bounce between buy and sell prints
+          and create fake premiums and discounts.
         </p>
         <p>
-          The redemption rate matters. xStocks reinvest dividends by raising a Token-2022 multiplier, so one AAPLx is slightly
-          more than one Apple share (about 1.003 today). Ignoring it would show a permanent fake premium.
+          xStocks reinvest dividends by raising a Token-2022 multiplier, so one raw AAPLx is slightly more than one Apple share
+          (about 1.003 today). Anchor reads the multiplier from the token mint. Ignoring it would show a permanent fake premium.
         </p>
         <Formula>premium = ln( token price ÷ (stock price × shares per token) )</Formula>
       </Section>
 
-      <Section n="2" title="Compare with what's normal for this hour">
+      <Section n="3" title="Compare with what's normal for this hour">
         <p>
-          Premiums behave differently when the market is open, in extended hours, and closed. Anchor builds a 30-day hourly
-          history from the Pyth History API and keeps separate baselines for each session. It uses the median and the median
-          absolute deviation (MAD) instead of the mean and standard deviation, because one bad print or a Monday-open gap would
-          distort ordinary averages.
+          Anchor builds a 30-day hourly history of the premium from the token&apos;s main pool and the US-listed stock (including
+          pre-market and after-hours). It keeps separate baselines for regular and extended hours. It uses hourly average prices
+          rather than single closing trades, and the median and median absolute deviation (MAD) rather than the mean and standard
+          deviation, so one bad print or a gap at the open doesn&apos;t skew what counts as normal.
         </p>
         <Formula>z = (premium − typical premium) ÷ σ</Formula>
-        <p>
-          σ also includes Pyth&apos;s live confidence interval for both prices. When Pyth&apos;s publishers disagree, Anchor
-          becomes more cautious about calling a price unusual.
-        </p>
+        <p>σ also includes Pyth&apos;s live confidence interval. When Pyth&apos;s publishers disagree, Anchor is slower to call a price unusual.</p>
       </Section>
 
-      <Section n="3" title="Widen the range while the market sleeps">
+      <Section n="4" title="Widen the range while the market sleeps">
         <p>
-          When the US market is closed, the &ldquo;real&rdquo; price is Friday&apos;s last trade, and the true value could have
-          moved since then. Anchor treats that uncertainty like a random walk: the fair range grows with the square root of the
-          time since the last trade, scaled by the stock&apos;s own hourly volatility.
+          When the US market is closed, the &ldquo;real&rdquo; price is the last trade, and the true value may have moved since.
+          Anchor treats that uncertainty like a random walk: the fair range grows with the square root of the time since the last
+          trade, scaled by the stock&apos;s own hourly volatility.
         </p>
         <Formula>σ(closed) = √( σ(extended)² + σ(hourly)² × hours since last trade )</Formula>
-        <p>After a 60-hour weekend the fair range is several times wider than on a Tuesday afternoon, which is correct.</p>
+        <p>After a 60-hour weekend, the fair range is several times wider than on a Tuesday afternoon, which is correct.</p>
       </Section>
 
-      <Section n="4" title="Decide, from a buyer's point of view">
+      <Section n="5" title="Decide, from a buyer's point of view">
         <ul className="list-disc space-y-1 pl-5">
           <li>
             <b>Fair</b>: within ±2σ of normal.
@@ -67,24 +72,16 @@ export default function How() {
           </li>
         </ul>
         <p>
-          Before you sign, Anchor prices the actual Jupiter quote the same way. It shows how much of the cost is the token premium
-          and how much is the swap&apos;s spread and price impact, and what that means in dollars on your order.
+          Before you sign, Anchor prices the actual Jupiter quote for your amount. It shows how much of the cost is the token
+          premium and how much is the swap&apos;s spread and price impact, and what that means in dollars on your order.
         </p>
       </Section>
 
-      <Section n="5" title="Leave an audit trail">
+      <Section n="6" title="Leave an audit trail">
         <p>
           Each buy includes a Solana memo in the same transaction as the swap, for example{" "}
-          <Code>anchor-guard:v1|AAPLx|v=fair|z=0.84|prem=+12.3bp|exec=+25.1bp|sess=overNight</Code>. The guard&apos;s decision is
+          <Code>anchor-guard:v1|AAPLx|v=fair|z=0.84|prem=+12.3bp|exec=+25.1bp|sess=regular</Code>. The guard&apos;s decision is
           therefore public and permanent, and anyone can check it. The Activity tab reads these memos directly from the chain.
-        </p>
-      </Section>
-
-      <Section n="6" title="Second opinion">
-        <p>
-          Where Ondo also issues the stock, Anchor runs the same test on Ondo&apos;s token. If both issuers show the same unusual
-          move, it probably reflects real demand. If only one does, the problem is probably specific to that token&apos;s
-          liquidity.
         </p>
       </Section>
     </article>

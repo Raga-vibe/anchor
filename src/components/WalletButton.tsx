@@ -19,5 +19,5 @@ const Base = dynamic(() => import("@solana/wallet-adapter-react-ui").then((m) =>
 });
 
 export default function WalletButton() {
-  return <Base className="anchor-wallet" labels={LABELS} />;
+  return <Base labels={LABELS} />;
 }

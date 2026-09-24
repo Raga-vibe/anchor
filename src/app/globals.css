@@ -84,7 +84,7 @@ body {
 }
 
 /* Wallet adapter button, restyled to match */
-.wallet-adapter-button.anchor-wallet {
+.wallet-adapter-button.wallet-adapter-button-trigger {
   height: 36px;
   padding: 0 14px;
   border-radius: 999px;
@@ -95,11 +95,11 @@ body {
   color: var(--button-ink);
   line-height: 36px;
 }
-.wallet-adapter-button.anchor-wallet:not([disabled]):hover {
+.wallet-adapter-button.wallet-adapter-button-trigger:not([disabled]):hover {
   background: var(--button);
   opacity: 0.85;
 }
-.wallet-adapter-button.anchor-wallet .wallet-adapter-button-start-icon {
+.wallet-adapter-button.wallet-adapter-button-trigger .wallet-adapter-button-start-icon {
   width: 18px;
   height: 18px;
   margin-right: 8px;

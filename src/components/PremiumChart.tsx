@@ -8,7 +8,6 @@ export type ChartPoint = {
   t: number;
   session: Session;
   premium: number;
-  ondo: number | null;
   staleHours: number;
   bandLo: number;
   bandHi: number;
@@ -52,7 +51,7 @@ function runs<T extends { t: number }>(pts: T[], ok: (p: T) => boolean) {
   return out;
 }
 
-export default function PremiumChart({ points, showOndo }: { points: ChartPoint[]; showOndo: boolean }) {
+export default function PremiumChart({ points }: { points: ChartPoint[] }) {
   const wrap = useRef<HTMLDivElement>(null);
   const [w, setW] = useState(600);
   const [hover, setHover] = useState<number | null>(null);
@@ -109,7 +108,6 @@ export default function PremiumChart({ points, showOndo }: { points: ChartPoint[
   );
   const closedRuns = runs(points, (p) => p.session === "closed");
   const premRuns = runs(points, () => true);
-  const ondoRuns = showOndo ? runs(points, (p) => p.ondo !== null) : [];
   const lastP = points[points.length - 1];
   const hp = hover !== null ? points[hover] : null;
 
@@ -155,9 +153,6 @@ export default function PremiumChart({ points, showOndo }: { points: ChartPoint[
           {bandPaths.map((d, i) => (
             <path key={i} d={d} fill="var(--band)" />
           ))}
-          {ondoRuns.map((r, i) => (
-            <path key={i} d={line(r, (p) => p.ondo!)} fill="none" stroke="var(--series-2)" strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" opacity={0.9} />
-          ))}
           {premRuns.map((r, i) => (
             <path key={i} d={line(r, (p) => p.premium)} fill="none" stroke="var(--series-1)" strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
           ))}
@@ -168,7 +163,6 @@ export default function PremiumChart({ points, showOndo }: { points: ChartPoint[
           <g pointerEvents="none">
             <line x1={x(hp.t)} x2={x(hp.t)} y1={M.top} y2={M.top + geo.ih} stroke="var(--axis)" strokeWidth={1} />
             <circle cx={x(hp.t)} cy={y(hp.premium)} r={4.5} fill="var(--series-1)" stroke="var(--card)" strokeWidth={2} />
-            {showOndo && hp.ondo !== null && <circle cx={x(hp.t)} cy={y(hp.ondo)} r={4.5} fill="var(--series-2)" stroke="var(--card)" strokeWidth={2} />}
           </g>
         )}
 
@@ -192,14 +186,12 @@ export default function PremiumChart({ points, showOndo }: { points: ChartPoint[
           <div className="font-medium">{tipFmt.format(new Date(hp.t * 1000))}</div>
           <div className="mb-1 text-muted">{SESSION_LABEL[hp.session]}</div>
           <Row color="var(--series-1)" label="xStock premium" value={pct(hp.premium)} />
-          {showOndo && hp.ondo !== null && <Row color="var(--series-2)" label="Ondo premium" value={pct(hp.ondo)} />}
           <Row color="var(--band)" label="Fair range" value={`${pct(hp.bandLo)} to ${pct(hp.bandHi)}`} square />
         </div>
       )}
 
       <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-2">
         <Legend color="var(--series-1)" label="xStock vs real stock" />
-        {showOndo && <Legend color="var(--series-2)" label="Ondo vs real stock" />}
         <Legend color="var(--band)" label="Fair range (±2σ)" square />
         <Legend color="var(--closed)" label="US market closed" square outline />
       </div>

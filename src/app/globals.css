@@ -1,99 +1,248 @@
 @import "tailwindcss";
 
+/* ---------- Design tokens ---------- */
+
 :root {
   color-scheme: light;
-  --page: #f9f9f7;
-  --surface: #fcfcfb;
-  --card: #ffffff;
-  --ink: #0b0b0b;
-  --ink-2: #52514e;
-  --muted: #898781;
-  --hairline: #e1e0d9;
-  --axis: #c3c2b7;
-  --ring: rgba(11, 11, 11, 0.1);
-  --accent: #2a78d6;
-  --series-1: #2a78d6;
-  --series-2: #eb6834;
-  --band: rgba(137, 135, 129, 0.16);
-  --closed: rgba(137, 135, 129, 0.08);
-  --good: #0ca30c;
-  --warning: #fab219;
-  --critical: #d03b3b;
-  --good-wash: rgba(12, 163, 12, 0.1);
-  --warning-wash: rgba(250, 178, 25, 0.16);
-  --critical-wash: rgba(208, 59, 59, 0.1);
-  --button: #0b0b0b;
+  --page: #f6f5f1;
+  --glow: rgba(99, 102, 241, 0.13);
+  --surface: #ffffff;
+  --surface-2: #f8f7f3;
+  --ink: #0c0e12;
+  --ink-2: #545b66;
+  --muted: #8a8f98;
+  --hairline: #e7e4dc;
+  --hairline-2: #f0eee8;
+  --accent: #4f46e5;
+  --accent-2: #8b5cf6;
+  --accent-ink: #ffffff;
+  --accent-wash: rgba(79, 70, 229, 0.08);
+  --good: #059669;
+  --warning: #d97706;
+  --critical: #dc2626;
+  --good-wash: rgba(5, 150, 105, 0.1);
+  --warning-wash: rgba(217, 119, 6, 0.12);
+  --critical-wash: rgba(220, 38, 38, 0.09);
+  --band: rgba(84, 91, 102, 0.12);
+  --closed: rgba(84, 91, 102, 0.07);
+  --button: #0c0e12;
   --button-ink: #ffffff;
+  --shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 8px 28px rgba(16, 24, 40, 0.06);
+  --shadow-lg: 0 2px 6px rgba(16, 24, 40, 0.05), 0 28px 64px rgba(16, 24, 40, 0.12);
 }
 
 @media (prefers-color-scheme: dark) {
   :root:where(:not([data-theme="light"])) {
     color-scheme: dark;
-    --page: #0d0d0d;
-    --surface: #1a1a19;
-    --card: #1a1a19;
-    --ink: #ffffff;
-    --ink-2: #c3c2b7;
-    --muted: #898781;
-    --hairline: #2c2c2a;
-    --axis: #383835;
-    --ring: rgba(255, 255, 255, 0.1);
-    --accent: #3987e5;
-    --series-1: #3987e5;
-    --series-2: #d95926;
-    --band: rgba(195, 194, 183, 0.14);
-    --closed: rgba(195, 194, 183, 0.06);
-    --good-wash: rgba(12, 163, 12, 0.16);
-    --warning-wash: rgba(250, 178, 25, 0.14);
-    --critical-wash: rgba(208, 59, 59, 0.18);
-    --button: #ffffff;
-    --button-ink: #0b0b0b;
+    --page: #07080b;
+    --glow: rgba(110, 112, 255, 0.2);
+    --surface: #0f1115;
+    --surface-2: #14171d;
+    --ink: #f3f4f6;
+    --ink-2: #a3a9b4;
+    --muted: #6b717c;
+    --hairline: rgba(255, 255, 255, 0.08);
+    --hairline-2: rgba(255, 255, 255, 0.045);
+    --accent: #8b8cff;
+    --accent-2: #b794ff;
+    --accent-ink: #0b0b14;
+    --accent-wash: rgba(139, 140, 255, 0.12);
+    --good: #34d399;
+    --warning: #fbbf24;
+    --critical: #f87171;
+    --good-wash: rgba(52, 211, 153, 0.12);
+    --warning-wash: rgba(251, 191, 36, 0.13);
+    --critical-wash: rgba(248, 113, 113, 0.14);
+    --band: rgba(163, 169, 180, 0.13);
+    --closed: rgba(163, 169, 180, 0.055);
+    --button: #f3f4f6;
+    --button-ink: #0b0c10;
+    --shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 10px 30px rgba(0, 0, 0, 0.35);
+    --shadow-lg: 0 1px 0 rgba(255, 255, 255, 0.05) inset, 0 30px 80px rgba(0, 0, 0, 0.55);
   }
 }
 
 @theme inline {
   --color-page: var(--page);
   --color-surface: var(--surface);
-  --color-card: var(--card);
+  --color-surface-2: var(--surface-2);
   --color-ink: var(--ink);
   --color-ink-2: var(--ink-2);
   --color-muted: var(--muted);
   --color-hairline: var(--hairline);
+  --color-hairline-2: var(--hairline-2);
   --color-accent: var(--accent);
+  --color-accent-2: var(--accent-2);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-wash: var(--accent-wash);
   --color-good: var(--good);
   --color-warning: var(--warning);
   --color-critical: var(--critical);
   --color-button: var(--button);
   --color-button-ink: var(--button-ink);
-  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-sans: var(--font-geist-sans), system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, "SF Mono", monospace;
+  --font-serif: var(--font-instrument-serif), Georgia, serif;
+  --shadow-card: var(--shadow);
+  --shadow-float: var(--shadow-lg);
 }
 
-html,
-body {
+/* ---------- Base ---------- */
+
+html {
   background: var(--page);
-  color: var(--ink);
 }
 
 body {
-  font-family: var(--font-sans);
+  color: var(--ink);
+  background:
+    radial-gradient(1100px 560px at 50% -220px, var(--glow), transparent 72%),
+    var(--page);
   -webkit-tap-highlight-color: transparent;
+  font-feature-settings: "ss01", "cv11";
+}
+
+::selection {
+  background: var(--accent-wash);
 }
 
 .tabular {
   font-variant-numeric: tabular-nums;
 }
 
-/* Wallet adapter button, restyled to match */
+.text-balance {
+  text-wrap: balance;
+}
+
+/* Faint dot grid that fades out, used behind hero sections */
+.dot-grid {
+  background-image: radial-gradient(var(--hairline) 1px, transparent 1px);
+  background-size: 22px 22px;
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, black 30%, transparent 75%);
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: 20px;
+  box-shadow: var(--shadow);
+}
+
+.accent-gradient {
+  background-image: linear-gradient(135deg, var(--accent), var(--accent-2));
+}
+
+.text-gradient {
+  background-image: linear-gradient(120deg, var(--ink) 20%, var(--accent) 60%, var(--accent-2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ---------- Motion ---------- */
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.animate-fade-up {
+  animation: fade-up 0.55s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--hairline-2);
+  border-radius: 10px;
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, var(--hairline), transparent);
+  animation: shimmer 1.4s infinite;
+}
+
+@keyframes live-ring {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in oklab, currentColor 55%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 7px transparent;
+  }
+}
+.live-dot {
+  animation: live-ring 1.8s ease-out infinite;
+}
+
+@keyframes flash {
+  0% {
+    background-color: var(--accent-wash);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+.flash {
+  animation: flash 1s ease-out;
+  border-radius: 6px;
+}
+
+@keyframes sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: none;
+  }
+}
+.animate-sheet-up {
+  animation: sheet-up 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+.animate-fade-in {
+  animation: fade-in 0.25s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* ---------- Wallet adapter, restyled to match ---------- */
+
 .wallet-adapter-button.wallet-adapter-button-trigger {
-  height: 36px;
-  padding: 0 14px;
+  height: 38px;
+  padding: 0 16px;
   border-radius: 999px;
   font-family: var(--font-sans);
   font-size: 14px;
   font-weight: 600;
   background: var(--button);
   color: var(--button-ink);
-  line-height: 36px;
+  line-height: 38px;
+  transition: opacity 0.15s ease;
 }
 .wallet-adapter-button.wallet-adapter-button-trigger:not([disabled]):hover {
   background: var(--button);
@@ -106,4 +255,43 @@ body {
 }
 .wallet-adapter-modal-wrapper {
   font-family: var(--font-sans);
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: 24px;
+  box-shadow: var(--shadow-lg);
+}
+.wallet-adapter-modal-title {
+  color: var(--ink);
+  font-family: var(--font-serif);
+  font-size: 30px;
+  font-weight: 400;
+}
+.wallet-adapter-modal-list .wallet-adapter-button {
+  color: var(--ink);
+  font-family: var(--font-sans);
+  border-radius: 14px;
+}
+.wallet-adapter-modal-list .wallet-adapter-button:not([disabled]):hover {
+  background: var(--surface-2);
+}
+.wallet-adapter-modal-button-close {
+  background: var(--surface-2);
+}
+.wallet-adapter-modal-button-close svg {
+  fill: var(--ink-2);
+}
+.wallet-adapter-modal-list-more {
+  color: var(--ink-2);
+}
+.wallet-adapter-dropdown-list {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  box-shadow: var(--shadow-lg);
+  font-family: var(--font-sans);
+}
+.wallet-adapter-dropdown-list-item {
+  color: var(--ink);
+}
+.wallet-adapter-dropdown-list-item:not([disabled]):hover {
+  background: var(--surface-2);
 }

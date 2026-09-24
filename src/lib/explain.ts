@@ -3,49 +3,52 @@ import type { GuardResult, Verdict } from "./guard";
 import { hours, pct, usd } from "./format";
 
 export const VERDICT_COPY: Record<Verdict, { label: string; headline: string }> = {
-  discount: { label: "Discount", headline: "Cheaper than usual" },
-  fair: { label: "Fair", headline: "Fair price" },
-  caution: { label: "Pricey", headline: "Pricier than usual" },
-  wait: { label: "Wait", headline: "Consider waiting" },
-  unknown: { label: "No data", headline: "Not enough data" },
+  discount: { label: "Discount", headline: "Cheaper than usual." },
+  fair: { label: "Fair", headline: "Fair price." },
+  caution: { label: "Pricey", headline: "Pricier than usual." },
+  wait: { label: "Wait", headline: "Consider waiting." },
+  unknown: { label: "No data", headline: "Not enough data." },
 };
 
-export function explain(g: GuardResult, ticker: string): string[] {
-  const lines: string[] = [];
-  const diff = g.premiumBps - g.typicalBps;
-  const dir = g.premiumBps >= 0 ? "above" : "below";
+const abs = (bps: number) => pct(Math.abs(bps)).replace("+", "");
 
-  lines.push(
-    `The token costs ${usd(g.tokenPricePerShare)} per share, ${pct(Math.abs(g.premiumBps)).replace("+", "")} ${dir} the real ${ticker} stock (${usd(g.equityPrice)}).`,
-  );
+// "AAPLx is 0.06% above real AAPL"
+export function gapPhrase(g: GuardResult, ticker: string, xstockSymbol: string) {
+  return `${xstockSymbol} is ${abs(g.premiumBps)} ${g.premiumBps >= 0 ? "above" : "below"} real ${ticker}`;
+}
 
+// What the verdict means for the buyer, without restating the gap.
+export function verdictLine(g: GuardResult): string {
+  const extra = usd(Math.abs(g.dollarsOverFairPer100));
+  switch (g.verdict) {
+    case "fair":
+      return `That's normal ${g.referenceStale ? "while the US market is closed" : "for this time of day"}.`;
+    case "discount":
+      return "Cheaper than it usually trades. A good moment if you were going to buy anyway.";
+    case "caution":
+      return `Pricier than usual: about ${extra} extra per $100.`;
+    case "wait":
+      return `${
+        g.referenceStale ? "Far outside even the widened range" : `Higher than ${Math.round(g.percentile * 100)}% of the last 30 days`
+      }. You'd overpay about ${extra} per $100.`;
+    default:
+      return "There isn't enough price history to judge this token yet.";
+  }
+}
+
+// The full one-liner: "AAPLx is 0.06% above real AAPL. That's normal for this time of day."
+export function summary(g: GuardResult, ticker: string, xstockSymbol: string): string {
+  return `${gapPhrase(g, ticker, xstockSymbol)}. ${verdictLine(g)}`;
+}
+
+// Supporting facts shown under the verdict.
+export function details(g: GuardResult, ticker: string): string[] {
+  const lines = [`Fair range right now: ${usd(g.fairLowPerShare)} – ${usd(g.fairHighPerShare)} per share.`];
   if (g.referenceStale) {
     lines.push(
-      `The US market hasn't traded ${ticker} for ${hours(g.hoursSinceReference)}, so the real price is uncertain. We allow a wider fair range: ${usd(g.fairLowPerShare)} – ${usd(g.fairHighPerShare)}.`,
+      `The US market hasn't traded ${ticker} for ${hours(g.hoursSinceReference)}, so the real price is uncertain and the fair range is wider.`,
     );
-  } else {
-    lines.push(`Fair range right now: ${usd(g.fairLowPerShare)} – ${usd(g.fairHighPerShare)} per share.`);
   }
-
-  switch (g.verdict) {
-    case "wait":
-      lines.push(
-        `${g.referenceStale ? "That's far outside even the widened range." : `That's higher than ${Math.round(g.percentile * 100)}% of comparable hours in the last 30 days.`} On a $100 buy you'd pay about ${usd(Math.abs(g.dollarsOverFairPer100))} more than usual. Waiting for the gap to close is usually cheaper.`,
-      );
-      break;
-    case "caution":
-      lines.push(
-        `It's on the expensive side (about ${usd(Math.abs(g.dollarsOverFairPer100))} extra per $100). Fine for small buys, but you may get a better price later.`,
-      );
-      break;
-    case "discount":
-      lines.push(`It's ${pct(Math.abs(diff)).replace("+", "")} cheaper than its usual level. A good moment to buy, if you were going to anyway.`);
-      break;
-    case "fair":
-      lines.push(`This gap is normal for this time of day. Nothing unusual.`);
-      break;
-    default:
-      break;
-  }
+  lines.push(`Usually the token trades ${abs(g.typicalBps)} ${g.typicalBps >= 0 ? "above" : "below"} the stock at this time of day.`);
   return lines;
 }

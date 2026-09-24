@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import type { Verdict } from "@/lib/guard";
 import { VERDICT_COPY } from "@/lib/explain";
 import { SESSION_LABEL, type Session } from "@/lib/session";
@@ -48,25 +48,44 @@ export function usePolling<T>(url: string | null, intervalMs = 0) {
   return { data, error, loading, reload: load };
 }
 
-const VERDICT_STYLE: Record<Verdict, { dot: string; wash: string }> = {
-  discount: { dot: "var(--good)", wash: "var(--good-wash)" },
-  fair: { dot: "var(--good)", wash: "var(--good-wash)" },
-  caution: { dot: "var(--warning)", wash: "var(--warning-wash)" },
-  wait: { dot: "var(--critical)", wash: "var(--critical-wash)" },
-  unknown: { dot: "var(--muted)", wash: "var(--band)" },
+// True for a moment whenever `value` changes (not on first render).
+export function useFlash(value: unknown) {
+  const [on, setOn] = useState(false);
+  const prev = useRef(value);
+  useEffect(() => {
+    if (prev.current === value) return;
+    prev.current = value;
+    setOn(true);
+    const id = setTimeout(() => setOn(false), 1000);
+    return () => clearTimeout(id);
+  }, [value]);
+  return on;
+}
+
+export function Flash({ value, children, className = "" }: { value: unknown; children: ReactNode; className?: string }) {
+  const on = useFlash(value);
+  return <span className={`${className} ${on ? "flash" : ""}`}>{children}</span>;
+}
+
+export const VERDICT_COLOR: Record<Verdict, { fg: string; wash: string }> = {
+  discount: { fg: "var(--good)", wash: "var(--good-wash)" },
+  fair: { fg: "var(--good)", wash: "var(--good-wash)" },
+  caution: { fg: "var(--warning)", wash: "var(--warning-wash)" },
+  wait: { fg: "var(--critical)", wash: "var(--critical-wash)" },
+  unknown: { fg: "var(--muted)", wash: "var(--band)" },
 };
 
 export function VerdictIcon({ verdict, className = "h-4 w-4" }: { verdict: Verdict; className?: string }) {
-  const color = VERDICT_STYLE[verdict].dot;
+  const color = VERDICT_COLOR[verdict].fg;
   const common = { className, viewBox: "0 0 16 16", "aria-hidden": true } as const;
   if (verdict === "fair" || verdict === "discount") {
     return (
       <svg {...common}>
         <circle cx="8" cy="8" r="8" fill={color} />
         {verdict === "fair" ? (
-          <path d="M4.5 8.2l2.3 2.3 4.7-4.9" fill="none" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M4.6 8.2l2.2 2.2 4.6-4.8" fill="none" stroke="var(--surface)" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
         ) : (
-          <path d="M8 4.5v7M5 8.6L8 11.5l3-2.9" fill="none" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M8 4.4v7M5.2 8.6 8 11.4l2.8-2.8" fill="none" stroke="var(--surface)" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
         )}
       </svg>
     );
@@ -74,9 +93,9 @@ export function VerdictIcon({ verdict, className = "h-4 w-4" }: { verdict: Verdi
   if (verdict === "caution") {
     return (
       <svg {...common}>
-        <path d="M8 1l7.5 13.5H.5z" fill={color} />
-        <path d="M8 6v4" stroke="#0b0b0b" strokeWidth="1.6" strokeLinecap="round" />
-        <circle cx="8" cy="12.2" r="0.9" fill="#0b0b0b" />
+        <path d="M8 1.2l7.2 13.2H.8z" fill={color} strokeLinejoin="round" />
+        <path d="M8 6v3.8" stroke="#111" strokeWidth="1.6" strokeLinecap="round" />
+        <circle cx="8" cy="12.1" r="0.9" fill="#111" />
       </svg>
     );
   }
@@ -84,13 +103,13 @@ export function VerdictIcon({ verdict, className = "h-4 w-4" }: { verdict: Verdi
     return (
       <svg {...common}>
         <circle cx="8" cy="8" r="8" fill={color} />
-        <path d="M6 5v6M10 5v6" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" />
+        <path d="M6.1 5v6M9.9 5v6" stroke="var(--surface)" strokeWidth="1.9" strokeLinecap="round" />
       </svg>
     );
   }
   return (
     <svg {...common}>
-      <circle cx="8" cy="8" r="7" fill="none" stroke={color} strokeWidth="2" />
+      <circle cx="8" cy="8" r="6.8" fill="none" stroke={color} strokeWidth="2" />
     </svg>
   );
 }
@@ -98,8 +117,10 @@ export function VerdictIcon({ verdict, className = "h-4 w-4" }: { verdict: Verdi
 export function VerdictBadge({ verdict, size = "sm" }: { verdict: Verdict; size?: "sm" | "md" }) {
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full font-semibold text-ink ${size === "md" ? "px-3 py-1 text-sm" : "px-2 py-0.5 text-xs"}`}
-      style={{ background: VERDICT_STYLE[verdict].wash }}
+      className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full font-semibold text-ink ${
+        size === "md" ? "px-3 py-1.5 text-sm" : "px-2.5 py-1 text-xs"
+      }`}
+      style={{ background: VERDICT_COLOR[verdict].wash }}
     >
       <VerdictIcon verdict={verdict} className={size === "md" ? "h-4 w-4" : "h-3.5 w-3.5"} />
       {VERDICT_COPY[verdict].label}
@@ -107,41 +128,36 @@ export function VerdictBadge({ verdict, size = "sm" }: { verdict: Verdict; size?
   );
 }
 
-export function verdictWash(v: Verdict) {
-  return VERDICT_STYLE[v].wash;
+export function LiveDot({ color = "var(--good)" }: { color?: string }) {
+  return <span className="live-dot inline-block h-2 w-2 rounded-full" style={{ background: color, color }} />;
 }
 
-export function SessionBanner({ session, staleHours }: { session: Session; staleHours?: number }) {
-  const open = session === "regular";
+export function SessionPill({ session, staleHours }: { session: Session; staleHours?: number }) {
+  const color = session === "regular" ? "var(--good)" : session === "closed" ? "var(--muted)" : "var(--warning)";
   return (
-    <div className="flex items-center gap-2 rounded-xl border border-hairline bg-card px-3 py-2 text-sm">
-      <span className="relative flex h-2.5 w-2.5">
-        {open && <span className="absolute inline-flex h-full w-full animate-ping rounded-full opacity-60" style={{ background: "var(--good)" }} />}
-        <span className="relative inline-flex h-2.5 w-2.5 rounded-full" style={{ background: open ? "var(--good)" : session === "closed" ? "var(--muted)" : "var(--warning)" }} />
-      </span>
-      <span className="font-medium">{SESSION_LABEL[session]}</span>
-      <span className="text-ink-2">
-        {session === "closed" && staleHours
-          ? `· last US trade ${hours(staleHours)} ago, fair ranges are wider`
-          : session === "regular"
-            ? "· comparing against live prices"
-            : "· thinner trading, fair ranges are wider"}
-      </span>
-    </div>
+    <span className="inline-flex items-center gap-2 rounded-full border border-hairline bg-surface/80 px-3 py-1 text-xs">
+      {session === "closed" ? <span className="h-2 w-2 rounded-full" style={{ background: color }} /> : <LiveDot color={color} />}
+      <span className="font-medium text-ink">{SESSION_LABEL[session]}</span>
+      {session === "closed" && staleHours ? <span className="text-ink-2">last trade {hours(staleHours)} ago</span> : null}
+    </span>
   );
 }
 
-export function Card({ children, className = "", style }: { children: ReactNode; className?: string; style?: React.CSSProperties }) {
+export function Card({ children, className = "", style }: { children: ReactNode; className?: string; style?: CSSProperties }) {
   return (
-    <div className={`rounded-2xl border border-hairline bg-card ${className}`} style={style}>
+    <div className={`card ${className}`} style={style}>
       {children}
     </div>
   );
 }
 
+export function Eyebrow({ children, className = "" }: { children: ReactNode; className?: string }) {
+  return <div className={`font-mono text-[11px] uppercase tracking-[0.14em] text-muted ${className}`}>{children}</div>;
+}
+
 export function ErrorNotice({ error }: { error: ApiError }) {
   return (
-    <Card className="p-4 text-sm">
+    <Card className="p-5 text-sm">
       <p className="font-semibold">Something went wrong</p>
       <p className="mt-1 break-words text-ink-2">{error.error}</p>
     </Card>
@@ -149,5 +165,32 @@ export function ErrorNotice({ error }: { error: ApiError }) {
 }
 
 export function Skeleton({ className = "" }: { className?: string }) {
-  return <div className={`animate-pulse rounded-lg bg-hairline ${className}`} />;
+  return <div className={`skeleton ${className}`} />;
+}
+
+export function TokenLogo({ symbol, ticker, size = 40 }: { symbol: string; ticker: string; size?: number }) {
+  const [failed, setFailed] = useState(false);
+  if (failed) {
+    return (
+      <span
+        className="inline-flex shrink-0 items-center justify-center rounded-full bg-surface-2 font-semibold text-ink-2 ring-1 ring-hairline"
+        style={{ width: size, height: size, fontSize: size * 0.32 }}
+      >
+        {ticker.slice(0, 2)}
+      </span>
+    );
+  }
+  return (
+    // xStock token logos from the issuer's public metadata
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={`https://xstocks-metadata.backed.fi/logos/tokens/${symbol}.png`}
+      alt=""
+      width={size}
+      height={size}
+      onError={() => setFailed(true)}
+      className="shrink-0 rounded-full ring-1 ring-hairline"
+      style={{ width: size, height: size }}
+    />
+  );
 }

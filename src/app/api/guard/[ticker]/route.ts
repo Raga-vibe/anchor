@@ -6,7 +6,7 @@ import { guardOne } from "@/lib/guard-service";
 
 export const dynamic = "force-dynamic";
 
-const CHART_DAYS = 7;
+const CHART_DAYS = 31;
 
 export async function GET(_req: Request, { params }: { params: Promise<{ ticker: string }> }) {
   const { ticker } = await params;

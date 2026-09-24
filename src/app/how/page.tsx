@@ -95,7 +95,7 @@ function Section({ n, title, children }: { n: string; title: string; children: R
   return (
     <section className="space-y-2">
       <h2 className="flex items-center gap-2 text-lg font-semibold">
-        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-ink text-xs text-page">{n}</span>
+        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-ink text-xs text-page">{n}</span>
         {title}
       </h2>
       <div className="space-y-2 text-ink-2">{children}</div>

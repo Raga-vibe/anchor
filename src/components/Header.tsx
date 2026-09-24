@@ -1,14 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import dynamic from "next/dynamic";
+import WalletButton from "@/components/WalletButton";
 import { usePathname } from "next/navigation";
-
-// The wallet button reads window state; render it client-only to avoid hydration mismatches.
-const WalletMultiButton = dynamic(
-  () => import("@solana/wallet-adapter-react-ui").then((m) => m.WalletMultiButton),
-  { ssr: false, loading: () => <div className="h-9 w-32 rounded-full bg-hairline" /> },
-);
 
 const NAV = [
   { href: "/", label: "Markets" },
@@ -36,7 +30,7 @@ export default function Header() {
           <AnchorMark />
           <span className="text-lg">Anchor</span>
         </Link>
-        <WalletMultiButton className="anchor-wallet" />
+        <WalletButton />
       </div>
       <nav className="mx-auto flex max-w-3xl gap-5 px-4 text-sm">
         {NAV.map((n) => {

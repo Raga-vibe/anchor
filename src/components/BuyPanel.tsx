@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import dynamic from "next/dynamic";
+import WalletButton from "@/components/WalletButton";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { VersionedTransaction } from "@solana/web3.js";
 import type { GuardedQuote } from "@/lib/trade";
@@ -9,10 +9,6 @@ import { VERDICT_COPY } from "@/lib/explain";
 import { pct, usd } from "@/lib/format";
 import { Card, VerdictBadge, verdictWash } from "./ui";
 
-const WalletMultiButton = dynamic(
-  () => import("@solana/wallet-adapter-react-ui").then((m) => m.WalletMultiButton),
-  { ssr: false },
-);
 
 const PRESETS = [10, 25, 50];
 
@@ -194,7 +190,7 @@ export default function BuyPanel({ ticker, xstockSymbol }: { ticker: string; xst
 
           {!connected ? (
             <div className="flex flex-col items-center gap-2 pt-1">
-              <WalletMultiButton className="anchor-wallet" />
+              <WalletButton />
               <span className="text-xs text-muted">Connect a Solana wallet to buy</span>
             </div>
           ) : (

@@ -1,15 +1,11 @@
 "use client";
 
-import dynamic from "next/dynamic";
+import WalletButton from "@/components/WalletButton";
 import { useWallet } from "@solana/wallet-adapter-react";
 import type { Verdict } from "@/lib/guard";
 import { shortAddr, usd } from "@/lib/format";
 import { Card, ErrorNotice, Skeleton, usePolling, VerdictBadge } from "@/components/ui";
 
-const WalletMultiButton = dynamic(
-  () => import("@solana/wallet-adapter-react-ui").then((m) => m.WalletMultiButton),
-  { ssr: false },
-);
 
 type Audit = {
   wallet: string;
@@ -31,7 +27,7 @@ export default function Activity() {
         <h1 className="text-2xl font-semibold tracking-tight">Your activity</h1>
         <p className="text-sm text-ink-2">Connect your wallet to see your holdings and every guard decision recorded on-chain.</p>
         <div className="flex justify-center">
-          <WalletMultiButton className="anchor-wallet" />
+          <WalletButton />
         </div>
       </div>
     );
